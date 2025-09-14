@@ -1,7 +1,7 @@
 # Database Schema
 
 ## ER Diagram
-![ER Diagram](./images/social-media-feed-er-diagram.png)
+![ER Diagram](./social-media-feed-er-diagram.png)
 
 The ER diagram above illustrates the main entities and relationships in the social media feed backend:
 - **Users** can create **Posts**, like, comment, and share.  
