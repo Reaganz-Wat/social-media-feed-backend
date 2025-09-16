@@ -1,0 +1,92 @@
+flowchart TD
+    %% Client Layer
+    subgraph Clients ["🖥️ Client Layer"]
+        WEB["Web Client<br/>(React/Vue)"]
+        MOBILE["Mobile Client<br/>(iOS/Android)"]
+        PLAYGROUND["GraphQL Playground<br/>(Testing Interface)"]
+    end
+
+    %% API Gateway/Load Balancer
+    LB["⚖️ Load Balancer<br/>(Nginx)"]
+
+    %% API Layer
+    subgraph API ["🔌 API Layer"]
+        GRAPHQL["GraphQL Endpoint<br/>(Graphene-Django)"]
+    end
+
+    %% Backend Services
+    subgraph Backend ["⚙️ Backend Services"]
+        DJANGO["Django Application<br/>• GraphQL Resolvers<br/>• Business Logic<br/>• Authentication<br/>• Feed Generation"]
+        CELERY["Celery Workers<br/>• Async Tasks<br/>• Notifications<br/>• Feed Fan-out<br/>• Analytics"]
+    end
+
+    %% Data Storage Layer
+    subgraph Storage ["💾 Data Storage"]
+        POSTGRES[("PostgreSQL Database<br/>• users, posts, comments<br/>• likes, shares, follows<br/>• friendships, messages<br/>• interactions")]
+        REDIS[("Redis Cache<br/>• Feed Cache<br/>• Session Store<br/>• Rate Limiting<br/>• Real-time Data")]
+    end
+
+    %% Message Queue
+    subgraph Queue ["📨 Message Queue"]
+        RABBITMQ["RabbitMQ<br/>(Message Broker)"]
+    end
+
+    %% Object Storage
+    subgraph ObjectStore ["📁 Object Storage"]
+        S3["S3/MinIO<br/>• Profile Pictures<br/>• Post Media<br/>• Video Content"]
+    end
+
+    %% Monitoring & Logging
+    subgraph Monitoring ["📊 Monitoring & Logging"]
+        PROMETHEUS["Prometheus<br/>(Metrics Collection)"]
+        GRAFANA["Grafana<br/>(Dashboards)"]
+        SENTRY["Sentry<br/>(Error Tracking)"]
+    end
+
+    %% Client to Load Balancer
+    WEB --> LB
+    MOBILE --> LB
+    PLAYGROUND --> LB
+
+    %% Load Balancer to API
+    LB --> GRAPHQL
+
+    %% API to Backend
+    GRAPHQL --> DJANGO
+
+    %% Backend to Storage
+    DJANGO --> POSTGRES
+    DJANGO --> REDIS
+    DJANGO --> S3
+
+    %% Async Processing
+    DJANGO --> RABBITMQ
+    RABBITMQ --> CELERY
+    CELERY --> POSTGRES
+    CELERY --> REDIS
+
+    %% Monitoring Connections
+    DJANGO --> SENTRY
+    DJANGO --> PROMETHEUS
+    POSTGRES --> PROMETHEUS
+    REDIS --> PROMETHEUS
+    PROMETHEUS --> GRAFANA
+
+    %% Bidirectional data flows
+    DJANGO <--> REDIS
+    CELERY <--> REDIS
+
+    %% Styling
+    classDef clientStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef apiStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef backendStyle fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef storageStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef queueStyle fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef monitorStyle fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+
+    class WEB,MOBILE,PLAYGROUND clientStyle
+    class GRAPHQL apiStyle
+    class DJANGO,CELERY backendStyle
+    class POSTGRES,REDIS,S3 storageStyle
+    class RABBITMQ queueStyle
+    class PROMETHEUS,GRAFANA,SENTRY monitorStyle
