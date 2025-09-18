@@ -1,5 +1,6 @@
 asgiref==3.9.1
 Django==5.2.6
+django-environ==0.12.0
 django-extensions==4.1
 Faker==37.6.0
 graphene==3.4.3
