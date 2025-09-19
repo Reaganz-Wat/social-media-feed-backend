@@ -1,5 +1,6 @@
 asgiref==3.9.1
 Django==5.2.6
+django-environ==0.12.0
 django-extensions==4.1
 Faker==37.6.0
 graphene==3.4.3
@@ -8,6 +9,7 @@ graphql-core==3.2.6
 graphql-relay==3.2.0
 pillow==11.3.0
 promise==2.3
+psycopg2-binary==2.9.10
 python-dateutil==2.9.0.post0
 six==1.17.0
 sqlparse==0.5.3
