@@ -105,4 +105,85 @@ class Query(graphene.ObjectType):
     def resolve_all_interactions(root, info):
         return Interaction.objects.all()
     
-schema = graphene.Schema(query=Query)
+
+# Mutations
+class CreatePost(graphene.Mutation):
+    """Mutation to create new post"""
+    
+    # OUTPUT FIELDS -> This is what the mutations returns
+    success = graphene.Boolean()
+    message = graphene.String()
+    post = graphene.Field(PostType)
+    errors = graphene.List(graphene.String)
+    
+    class Arguments:
+        
+        # These are the required fields that are needed by the post model
+        user_id = graphene.ID(required=True, description="ID of the user who is creating the post")
+        content = graphene.String(required=True, description="Post content")
+        
+        # Optional fields
+        title = graphene.String(description="Optional post title")
+        media_type = graphene.String(description="Type of media: image, video, audioz, gif")
+        
+    def mutate(self, info, user_id, content, title=None, media_type=None):
+        """
+        The mutate method is where all the magic happens!
+        
+        Parameters:
+        - self: The mutation instance
+        - info: GraphQL execution info (contains context, user, etc.)
+        - user_id, content, title, media_type: The arguments we defined above
+        """
+        
+        try:
+            # Step 1: Validate the user exists
+            try:
+                user = CustomUser.objects.get(id=user_id)
+            except CustomUser.DoesNotExist:
+                return CreatePost(
+                    success=False,
+                    message="User nof found",
+                    post=None,
+                    errors=["Invalid user ID"]
+                )
+                
+            # Validate the content so that it is not empty
+            if not content.strip():
+                return CreatePost(
+                    success=False,
+                    message="Content cannot be empty",
+                    post=None,
+                    errors=["Content is required"]
+                )
+                
+            # Create the post
+            post = Post.objects.create(
+                user=user,
+                title=title,
+                content=content.strip(),
+                media_type=media_type
+            )
+            
+            # Return success response
+            return CreatePost(
+                success=True,
+                message=f"Post created successfully by {user.username}",
+                post=post,
+                errors=[]
+            )
+            
+        except Exception as e:
+            # Here it handles any unexpected errors
+            return CreatePost(
+                success=False,
+                message="An error occured while creating the post",
+                post=None,
+                errors=[str(e)]
+            )
+
+class Mutation(graphene.ObjectType):
+    """This is where you register all your mutations"""
+    create_post = CreatePost.Field()
+    
+schema = graphene.Schema(query=Query, mutation=Mutation)
