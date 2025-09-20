@@ -19,9 +19,22 @@ class CustomUserType(DjangoObjectType):
         fields = "__all__"
         
 class PostType(DjangoObjectType):
+    likes_count = graphene.Int()
+    comment_count = graphene.Int()
+    share_count = graphene.Int()
+    
     class Meta:
         model = Post
         fields = "__all__"
+        
+    def resolve_likes_count(self, info):
+        return self.likes.count()
+    
+    def resolve_comment_count(self, info):
+        return self.comments.filter(is_deleted=False).count()
+    
+    def resolve_share_count(self, info):
+        return self.shares.count()
         
 class CommentType(DjangoObjectType):
     class Meta:
@@ -65,7 +78,7 @@ class InteractionType(DjangoObjectType):
         
 class Query(graphene.ObjectType):
     all_users = graphene.List(CustomUserType)
-    all_posts = graphene.List(PostType)
+    all_posts = graphene.List(PostType, limit=graphene.Int(default_value=10), offset=graphene.Int(default_value=0), user_id=graphene.ID())
     all_comments = graphene.List(CommentType)
     all_comment_likes = graphene.List(CommentLikeType)
     all_post_likes = graphene.List(PostLikeType)
@@ -78,8 +91,20 @@ class Query(graphene.ObjectType):
     def resolve_all_users(root, info):
         return CustomUser.objects.all()
     
-    def resolve_all_posts(root, info):
-        return Post.objects.all()
+    def resolve_all_posts(root, info, limit=10, offset=0, user_id=None):
+        # return Post.objects.all()
+        
+        queryset = Post.objects.filter(is_deleted=False).select_related('user').prefetch_related('likes', 'comments', 'shares')
+        
+        # Filter by user if specified
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        
+        # Order by creation date (newest first)
+        queryset = queryset.order_by('-created_at')
+        
+        # Apply pagination
+        return queryset[offset:offset + limit]
     
     def resolve_all_comments(root, info):
         return Comment.objects.all()
