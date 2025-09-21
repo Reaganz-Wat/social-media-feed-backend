@@ -87,6 +87,7 @@ class Query(graphene.ObjectType):
     all_friends = graphene.List(FriendshipType)
     all_messages = graphene.List(MessageType)
     all_interactions = graphene.List(InteractionType)
+    post_by_id = graphene.Field(PostType, id=graphene.ID(required=True))
     
     def resolve_all_users(root, info):
         return CustomUser.objects.all()
@@ -105,6 +106,19 @@ class Query(graphene.ObjectType):
         
         # Apply pagination
         return queryset[offset:offset + limit]
+    
+    def resolve_post_by_id(self, info, id):
+        """
+        Get a single post by ID with all related data
+        """
+        try:
+            return Post.objects.select_related('user').prefetch_related(
+                'comments__user',
+                'likes__user',
+                'shares__user'
+            ).get(id=id, is_deleted=False)
+        except Post.DoesNotExist:
+            return None
     
     def resolve_all_comments(root, info):
         return Comment.objects.all()
