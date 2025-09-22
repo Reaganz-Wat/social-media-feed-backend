@@ -89,6 +89,12 @@ class Query(graphene.ObjectType):
     all_interactions = graphene.List(InteractionType)
     post_by_id = graphene.Field(PostType, id=graphene.ID(required=True))
     
+    user_feed = graphene.List(
+        PostType,
+        limit=graphene.Int(default_value=10),
+        offset=graphene.Int(default_value=0)
+    )
+    
     def resolve_all_users(root, info):
         return CustomUser.objects.all()
     
@@ -119,6 +125,33 @@ class Query(graphene.ObjectType):
             ).get(id=id, is_deleted=False)
         except Post.DoesNotExist:
             return None
+        
+    
+    def resolve_user_feed(self, info, limit=10, offset=0):
+        """
+        Personalized feed showing posts from followed users
+        Note: This requires authentication - you'll need to implement JWT auth
+        """
+        # Get current user from context (requires authentication middleware)
+        user = info.context.user
+        if not user.is_authenticated:
+            return []
+        
+        # Get IDs of users that current user follows
+        following_users = Follow.objects.filter(follower=user).values_list('followee_id', flat=True)
+        
+        # Include current user's posts too
+        user_ids = list(following_users) + [user.id]
+        
+        queryset = Post.objects.filter(
+            user_id__in=user_ids,
+            is_deleted=False
+        ).select_related('user').prefetch_related('likes', 'comments', 'shares')
+        
+        queryset = queryset.order_by('-created_at')
+        return queryset[offset:offset + limit]
+    
+    
     
     def resolve_all_comments(root, info):
         return Comment.objects.all()
