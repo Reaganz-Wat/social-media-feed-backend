@@ -12,6 +12,9 @@ from social_media_feed_app.models import (
     Message, 
     Interaction
 )
+from django.utils import timezone
+from django.db.models import Count, Q, F
+from datetime import timedelta
 
 class CustomUserType(DjangoObjectType):
     class Meta:
@@ -75,7 +78,17 @@ class InteractionType(DjangoObjectType):
     class Meta:
         model = Interaction
         fields = "__all__"
-        
+
+class UserStatsType(graphene.ObjectType):
+    total_posts = graphene.Int()
+    total_likes = graphene.Int()
+    total_comments = graphene.Int()
+    total_shares = graphene.Int()
+    followers_count = graphene.Int()
+    following_count = graphene.Int()
+    engagement_rate = graphene.Float()
+    top_performing_post = graphene.Field(PostType)
+
 class Query(graphene.ObjectType):
     all_users = graphene.List(CustomUserType)
     all_posts = graphene.List(PostType, limit=graphene.Int(default_value=10), offset=graphene.Int(default_value=0), user_id=graphene.ID())
@@ -88,6 +101,10 @@ class Query(graphene.ObjectType):
     all_messages = graphene.List(MessageType)
     all_interactions = graphene.List(InteractionType)
     post_by_id = graphene.Field(PostType, id=graphene.ID(required=True))
+    post_comments = graphene.List(CommentType, id=graphene.ID(required=True))
+    trending_posts = graphene.List(PostType, limit=graphene.Int(default_value=12), hours=graphene.Int(default_value=24))
+    user_by_id = graphene.Field(CustomUserType, id=graphene.ID(required=True))
+    user_stats = graphene.Field(UserStatsType, id=graphene.ID(required=True))
     
     user_feed = graphene.List(
         PostType,
@@ -152,6 +169,86 @@ class Query(graphene.ObjectType):
         return queryset[offset:offset + limit]
     
     
+    def resolve_post_comments(root, info, post_id=0):
+        
+        """This post comments returns a list of
+        comments for a post given the id of the post,and it returns 
+        the comments for that post"""
+        
+        return Comment.objects.filter(
+            post_id=post_id,
+            parent_comment=None,  # Only top-level comments
+            is_deleted=False
+        ).select_related('user').prefetch_related('replies', 'likes').order_by('created_at')
+    
+    
+    def resolve_trending_posts(self, info, limit=10, hours=24):
+        """
+        Get trending posts based on engagement in the last X hours
+        """
+        time_threshold = timezone.now() - timedelta(hours=hours)
+        
+        # Get posts with engagement counts from the specified time period
+        queryset = Post.objects.filter(
+            created_at__gte=time_threshold,
+            is_deleted=False
+        ).annotate(
+            recent_likes=Count('likes', filter=Q(likes__created_at__gte=time_threshold)),
+            recent_comments=Count('comments', filter=Q(comments__created_at__gte=time_threshold, comments__is_deleted=False)),
+            recent_shares=Count('shares', filter=Q(shares__created_at__gte=time_threshold)),
+            # Calculate engagement score
+            engagement_score=F('recent_likes') + F('recent_comments') * 2 + F('recent_shares') * 3
+        ).select_related('user').prefetch_related('likes', 'comments', 'shares')
+        
+        return queryset.order_by('-engagement_score')[:limit]
+    
+    def resolve_user_by_id(root, info, id):
+        """This query returns the user information by the id"""
+        
+        try:
+            return CustomUser.objects.prefetch_related('posts',
+                'followers',
+                'following').get(id=id)
+        except CustomUser.DoesNotExist:
+            return None
+        
+    def resolve_user_stats(self, info, id):
+            """
+            Get comprehensive user statistics
+            """
+            try:
+                user = CustomUser.objects.get(id=id)
+            except CustomUser.DoesNotExist:
+                return None
+            
+            # Calculate stats
+            total_posts = user.posts.filter(is_deleted=False).count()
+            total_likes = PostLike.objects.filter(post__user=user).count()
+            total_comments = Comment.objects.filter(post__user=user, is_deleted=False).count()
+            total_shares = Share.objects.filter(post__user=user).count()
+            followers_count = user.followers.count()
+            following_count = user.following.count()
+            
+            # Calculate engagement rate
+            total_engagement = total_likes + total_comments + total_shares
+            engagement_rate = (total_engagement / max(total_posts, 1)) if total_posts > 0 else 0
+            
+            # Get top performing post
+            top_post = user.posts.filter(is_deleted=False).annotate(
+                engagement=Count('likes') + Count('comments') + Count('shares')
+            ).order_by('-engagement').first()
+            
+            return UserStatsType(
+                total_posts=total_posts,
+                total_likes=total_likes,
+                total_comments=total_comments,
+                total_shares=total_shares,
+                followers_count=followers_count,
+                following_count=following_count,
+                engagement_rate=engagement_rate,
+                top_performing_post=top_post
+            )
+        
     
     def resolve_all_comments(root, info):
         return Comment.objects.all()
