@@ -145,7 +145,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL="social_media_feed_app.CustomUser"
 
 GRAPHENE = {
-    "SCHEMA": "social_media_feed_backend.schema.schema",
+    "SCHEMA": "social_media_feed_app.schema.schema.schema",
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
     ],
