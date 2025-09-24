@@ -15,6 +15,7 @@ from social_media_feed_app.models import (
 from django.utils import timezone
 from django.db.models import Count, Q, F
 from datetime import timedelta
+import graphql_jwt
 
 class CustomUserType(DjangoObjectType):
     class Meta:
@@ -353,6 +354,11 @@ class CreatePost(graphene.Mutation):
 
 class Mutation(graphene.ObjectType):
     """This is where you register all your mutations"""
+    
+    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    verify_token = graphql_jwt.Verify.Field()
+    refresh_token = graphql_jwt.Refresh.Field()
+    
     create_post = CreatePost.Field()
     
 schema = graphene.Schema(query=Query, mutation=Mutation)

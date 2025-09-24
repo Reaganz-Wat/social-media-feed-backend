@@ -145,8 +145,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL="social_media_feed_app.CustomUser"
 
 GRAPHENE = {
-    "SCHEMA": "social_media_feed_backend.schema.schema"
+    "SCHEMA": "social_media_feed_backend.schema.schema",
+    "MIDDLEWARE": [
+        "graphql_jwt.middleware.JSONWebTokenMiddleware",
+    ],
 }
+
+AUTHENTICATION_BACKENDS = [
+    "graphql_jwt.backends.JSONWebTokenBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 
 # Email Configuration
