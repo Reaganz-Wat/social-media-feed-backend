@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from graphene_django.views import GraphQLView
-from social_media_feed_backend.schema import schema
+from social_media_feed_app.schema.schema import schema
 from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [

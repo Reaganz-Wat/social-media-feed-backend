@@ -22,60 +22,52 @@ The project is designed with scalability, modularity, and clean documentation in
 
 ### 🔹 Codebase
 ```text
-social_feed_backend/
+social_media_feed_backend/
 │
 ├── docs/                          # 📚 Documentation (see below)
 │
-├── social_feed/                   # 🐍 Main Django project folder
+├── social_media_feed_backend/                   # 🐍 Main Django project folder
 │   ├── __init__.py
 │   ├── asgi.py
 │   ├── settings.py                 # Base settings
 │   ├── urls.py
 │   └── wsgi.py
 │
-├── apps/                          # 📦 Django apps (modularized)
-│   ├── users/
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   ├── tests.py
-│   │   └── ...
-│   │
-│   ├── posts/
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   └── ...
-│   │
-│   ├── feed/
-│   │   ├── services.py             # feed generation logic
-│   │   ├── views.py
-│   │   └── ...
-│   │
-│   └── notifications/
-│       ├── models.py
-│       └── ...
+├── social_media_feed_app/                          # 📦 Django apps (modularized)
+│   ├── management/
+│   │   └──commands/
+|   |      └──seed.py
+|   |
+│   ├── migrations/
+│   │   ├── __init__.py
+│   │   └── 00001_initial.py
+|   |
+│   ├── schema/
+│   │   ├── __init__.py
+│   │   ├── inputs.py
+│   │   ├── mutations.py
+│   │   ├── queries.py
+|   |   ├── schema.py
+│   │   └── types.py
+|   |
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── signals.py
+│   ├── tests.py
+│   └── views.py
 │
-├── config/                        # ⚙️ Config & infra stuff
-│   ├── settings/                   # Split settings by env
-│   │   ├── base.py
-│   │   ├── dev.py
-│   │   ├── prod.py
-│   │   └── test.py
-│   ├── logging.yaml
-│   └── gunicorn.conf.py
-│
-├── tests/                         # ✅ Extra test directory if needed
+├── venv/                          # virtual environment
 │
 ├── scripts/                       # 🔧 Utility scripts
-│   ├── seed_data.py
 │   └── backup_db.sh
 │
 ├── requirements.txt                # or pyproject.toml (if poetry)
 ├── manage.py
 ├── .env.example
+├── .gitignore
+├── .Jenkinsfile
 ├── Dockerfile
 ├── docker-compose.yml
 └── README.md
@@ -94,21 +86,6 @@ social_feed_backend/
 │   ├── 02_SCHEMA.md
 │   ├── 03_INDEXING_STRATEGY.md
 │   └── 04_SEEDING_AND_MIGRATIONS.md
-│
-├── backend/
-│   ├── 01_DJANGO_SETUP.md
-│   ├── 02_APPS_STRUCTURE.md
-│   ├── 03_MODELS.md
-│   ├── 04_SERIALIZERS.md
-│   ├── 05_VIEWS_AND_ENDPOINTS.md
-│   ├── 06_PERMISSIONS_AND_AUTH.md
-│   └── 07_TESTING.md
-│
-├── infra/
-│   ├── 01_SETTINGS.md
-│   ├── 02_ENVIRONMENT.md
-│   ├── 03_DEPLOYMENT.md
-│   └── 04_LOGGING_MONITORING.md
 │
 └── README.md
 ```
