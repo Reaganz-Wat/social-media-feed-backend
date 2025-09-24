@@ -444,11 +444,206 @@ subscription PostInteractions($postId: ID!) {
 - **URL**: `/graphql/`
 - **Subscriptions**: `/graphql/subscriptions/`
 
-### **Authentication Required**
+### Authentication Required
 Most mutations require authentication. Include in headers:
 ```json
 {
   "Authorization": "Bearer <your-jwt-token>"
+}
+```
+
+### Authentication Flow
+
+#### 1. Obtain JWT Token
+Use the `tokenAuth` mutation to authenticate and receive a JWT token.
+
+**Mutation:**
+```graphql
+mutation TokenAuth($username: String!, $password: String!) {
+  tokenAuth(username: $username, password: $password) {
+    token
+    payload
+    refreshExpiresIn
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "username": "your_username",
+  "password": "your_password"
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "tokenAuth": {
+      "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+      "payload": {
+        "username": "your_username",
+        "exp": 1640995200,
+        "origIat": 1640908800
+      },
+      "refreshExpiresIn": 1641081600
+    }
+  }
+}
+```
+
+#### 2. Using the Token
+Include the token in the Authorization header for subsequent requests:
+
+```http
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+**Example authenticated mutation:**
+```graphql
+mutation CreatePost($title: String!, $content: String!) {
+  createPost(title: $title, content: $content) {
+    post {
+      id
+      title
+      content
+      author {
+        username
+      }
+    }
+    success
+    errors
+  }
+}
+```
+
+#### 3. Verify Token
+Check if a token is still valid using the `verifyToken` mutation.
+
+**Mutation:**
+```graphql
+mutation VerifyToken($token: String!) {
+  verifyToken(token: $token) {
+    payload
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+**Response (Valid Token):**
+```json
+{
+  "data": {
+    "verifyToken": {
+      "payload": {
+        "username": "your_username",
+        "exp": 1640995200,
+        "origIat": 1640908800
+      }
+    }
+  }
+}
+```
+
+#### 4. Refresh Token
+Refresh an expired or soon-to-expire token to get a new one.
+
+**Mutation:**
+```graphql
+mutation RefreshToken($token: String!) {
+  refreshToken(token: $token) {
+    token
+    payload
+    refreshExpiresIn
+  }
+}
+```
+
+**Variables:**
+```json
+{
+  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "refreshToken": {
+      "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+      "payload": {
+        "username": "your_username",
+        "exp": 1641081600,
+        "origIat": 1640995200
+      },
+      "refreshExpiresIn": 1641168000
+    }
+  }
+}
+```
+
+### Token Payload Structure
+The JWT payload contains:
+- `username`: The authenticated user's username
+- `exp`: Token expiration timestamp (Unix time)
+- `origIat`: Original token issued at timestamp (Unix time)
+- `user_id`: The authenticated user's ID (may vary based on configuration)
+
+### Error Handling
+
+#### Authentication Errors
+```json
+{
+  "errors": [
+    {
+      "message": "Please enter valid credentials",
+      "locations": [{"line": 2, "column": 3}],
+      "path": ["tokenAuth"]
+    }
+  ],
+  "data": {
+    "tokenAuth": null
+  }
+}
+```
+
+#### Invalid/Expired Token Errors
+```json
+{
+  "errors": [
+    {
+      "message": "Error decoding signature",
+      "locations": [{"line": 2, "column": 3}],
+      "path": ["verifyToken"]
+    }
+  ],
+  "data": {
+    "verifyToken": null
+  }
+}
+```
+
+#### Unauthenticated Request Errors
+```json
+{
+  "errors": [
+    {
+      "message": "You do not have permission to perform this action",
+      "locations": [{"line": 2, "column": 3}],
+      "path": ["createPost"]
+    }
+  ],
+  "data": {
+    "createPost": null
+  }
 }
 ```
 
