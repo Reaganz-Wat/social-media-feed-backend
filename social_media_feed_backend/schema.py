@@ -95,16 +95,7 @@ class UserStatsType(graphene.ObjectType):
 
 # Query ......................
 class Query(graphene.ObjectType):
-    all_users = graphene.List(CustomUserType)
     all_posts = graphene.List(PostType, limit=graphene.Int(default_value=10), offset=graphene.Int(default_value=0), user_id=graphene.ID())
-    all_comments = graphene.List(CommentType)
-    all_comment_likes = graphene.List(CommentLikeType)
-    all_post_likes = graphene.List(PostLikeType)
-    all_shares = graphene.List(ShareType)
-    all_follows = graphene.List(FollowType)
-    all_friends = graphene.List(FriendshipType)
-    all_messages = graphene.List(MessageType)
-    all_interactions = graphene.List(InteractionType)
     post_by_id = graphene.Field(PostType, id=graphene.ID(required=True))
     post_comments = graphene.List(CommentType, id=graphene.ID(required=True))
     trending_posts = graphene.List(PostType, limit=graphene.Int(default_value=12), hours=graphene.Int(default_value=24))
