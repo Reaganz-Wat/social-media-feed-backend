@@ -273,7 +273,89 @@ class Query(graphene.ObjectType):
     
     def resolve_all_interactions(root, info):
         return Interaction.objects.all()
+
+
+class CreateCommentInput(graphene.InputObjectType):
+    # user_id = graphene.ID(required=True, description="ID of the user who is creating the post")
+    post_id = graphene.ID(required=True, description="ID of the comment the post being commented on")
+    content = graphene.String(required=True, description="The content for the comment")
+    parent_comment_id = graphene.ID()
+
+class CreateComment(graphene.Mutation):
+    """Mutation to create a new comment on a post"""
     
+    # OUTPUT FIELDS -> This is what the mutations returns
+    success = graphene.Boolean()
+    message = graphene.String()
+    comment = graphene.Field(CommentType)
+    errors = graphene.List(graphene.String)
+    
+    class Arguments:
+        input = CreateCommentInput(required=True)
+
+    def mutate(self, info, input):
+        user = info.context.user
+        if not user.is_authenticated:
+            return CreateComment(
+                success=False,
+                message="Authentication required",
+                errors=["You must be logged in to comment"]
+            )
+        
+        try:
+                # Verify post exists
+            post = Post.objects.get(id=input.post_id, is_deleted=False)
+        except Post.DoesNotExist:
+            return CreateComment(
+                success=False,
+                message="Post not found",
+                errors=["Invalid post ID"]
+            )
+        
+                # Verify parent comment if specified
+        try:
+            parent_comment = None
+            if input.parent_comment_id:
+                try:
+                    parent_comment = Comment.objects.get(
+                        id=input.parent_comment_id,
+                        post=post,
+                        is_deleted=False
+                    )
+                except Comment.DoesNotExist:
+                    return CreateComment(
+                        success=False,
+                            message="Parent comment not found",
+                            errors=["Invalid parent comment ID"]
+                        )
+                
+            if not input.content.strip():
+                return CreateComment(
+                    success=False,
+                    message="Comment cannot be empty",
+                    errors=["Content is required"]
+                )
+                
+            comment = Comment.objects.create(
+                post=post,
+                user=user,
+                parent_comment=parent_comment,
+                content=input.content.strip()
+            )
+            
+            return CreateComment(
+                success=True,
+                message="Comment created successfully",
+                comment=comment,
+                errors=[]
+               )
+                
+        except Exception as e:
+            return CreateComment(
+                success=False,
+                message="An error occurred while creating the comment",
+                errors=[str(e)]
+            )
 
 # Mutations
 class CreatePost(graphene.Mutation):
@@ -354,5 +436,6 @@ class CreatePost(graphene.Mutation):
 class Mutation(graphene.ObjectType):
     """This is where you register all your mutations"""
     create_post = CreatePost.Field()
+    create_comment = CreateComment.Field()
     
 schema = graphene.Schema(query=Query, mutation=Mutation)
