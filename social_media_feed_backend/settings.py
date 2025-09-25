@@ -18,6 +18,7 @@ env = environ.Env(
     # Set default values for environment variables
     DB_PORT=(int, 5432),
     DEBUG=(bool, True),
+    REDIS_URL=(str, "redis://localhost:6379/0"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -92,11 +93,11 @@ DATABASES = {
     
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB'),  # Default fallback
-        'USER': os.environ.get('POSTGRES_USER'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env.int('DB_PORT', default=5432),  # <-- cast to int
     }
 }
 
@@ -173,3 +174,13 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # print("EMAIL_USE_TLS:", EMAIL_USE_TLS)
 # print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
 # print("EMAIL_HOST_PASSWORD:", EMAIL_HOST_PASSWORD)
+
+
+# Celery Configuration
+CELERY_BROKER_URL = env("REDIS_URL")
+CELERY_RESULT_BACKEND = env("REDIS_URL")
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Africa/Kampala"
