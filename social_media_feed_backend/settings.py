@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import environ
 import os
+import datetime
 
 env = environ.Env(
     # Set default values for environment variables
@@ -49,7 +50,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'social_media_feed_app',
     'django_extensions',
-    'graphene_django'
+    'graphene_django',
+    'channels',
+    'channels_graphql_ws'
 ]
 
 MIDDLEWARE = [
@@ -184,3 +187,34 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Africa/Kampala"
+
+GRAPHQL_JWT = {
+    'JWT_VERIFY_EXPIRATION': True,
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(hours=24),
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+
+# WebSocket configuration
+CHANNELS_GRAPHQL_WS = {
+    # Set the path for WebSocket connections
+    "GRAPHQL_WS_PATH": "graphql-ws/",
+    
+    # Authentication backend
+    "AUTHENTICATION_REQUIRED": True,
+    
+    # Connection keep alive ping interval
+    "HEARTBEAT_INTERVAL": 20,
+    
+    # Maximum message size
+    "MAX_MESSAGE_SIZE": 1024 * 1024,  # 1MB
+}

@@ -19,8 +19,10 @@ from django.urls import path
 from graphene_django.views import GraphQLView
 from social_media_feed_app.schema.schema import schema
 from django.views.decorators.csrf import csrf_exempt
+from graphene_django.views import GraphQLView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("graphql", csrf_exempt(GraphQLView.as_view(graphiql=True, schema=schema))),
+    # path('graphql/subscriptions', csrf_exempt(GraphQLView.as_view(graphiql=True))),
 ]

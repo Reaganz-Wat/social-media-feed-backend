@@ -6,6 +6,7 @@ from django.core.validators import validate_email
 from .types import *
 from .inputs import *
 from social_media_feed_app.models import *
+from .subscriptions import PostCreatedSubscription
 
 class RegisterUser(graphene.Mutation):
     success = graphene.Boolean()
@@ -162,6 +163,18 @@ class CreatePost(graphene.Mutation):
                 title=input.title,
                 content=input.content.strip(),
                 media_type=input.media_type
+            )
+            
+            # Trigger subscription
+            PostCreatedSubscription.broadcast(
+                payload=post,
+                group="post_created"
+            )
+        
+            # Also trigger user-specific subscription
+            PostCreatedSubscription.broadcast(
+                payload=post,
+                group=f"post_created_by_{user.id}"
             )
             
             return CreatePost(
