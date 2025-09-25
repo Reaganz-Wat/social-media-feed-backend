@@ -1,5 +1,6 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save
 from django.dispatch import receiver
+from .tasks import sending_email_on_registration
 from django.contrib.auth.signals import user_logged_in
 from .models import CustomUser, Post, PostLike, Comment, Follow, Interaction
 
@@ -18,8 +19,13 @@ def user_created_handler(sender, instance, created, **kwargs):
             metadata={'action': 'user_registered', 'timestamp': instance.created_at.isoformat()}
         )
         
-        # You could also:
-        # - Send welcome email
+        # Send welcome email asynchronously via Celery
+        sending_email_on_registration.delay(
+            user_email=instance.email,
+            user_name=instance.username
+        )
+
+        # Additional optional actions:
         # - Create default user settings
         # - Add to default groups
         # - Create notification preferences
