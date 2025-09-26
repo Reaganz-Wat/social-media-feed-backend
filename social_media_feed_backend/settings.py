@@ -42,6 +42,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
+    'channels_graphql_ws',
+    
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -50,9 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'social_media_feed_app',
     'django_extensions',
-    'graphene_django',
-    'channels',
-    'channels_graphql_ws'
+    'graphene_django'
 ]
 
 MIDDLEWARE = [
@@ -84,6 +86,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'social_media_feed_backend.wsgi.application'
 
+ASGI_APPLICATION = 'social_media_feed_backend.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -152,7 +155,7 @@ GRAPHENE = {
     "SCHEMA": "social_media_feed_app.schema.schema.schema",
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
-    ],
+    ]
 }
 
 AUTHENTICATION_BACKENDS = [
@@ -198,23 +201,23 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [('redis', 6379)],
         },
     },
 }
 
 
-# WebSocket configuration
 CHANNELS_GRAPHQL_WS = {
-    # Set the path for WebSocket connections
-    "GRAPHQL_WS_PATH": "graphql-ws/",
-    
     # Authentication backend
-    "AUTHENTICATION_REQUIRED": True,
+    "AUTHENTICATION_REQUIRED": False,  # ✅ Set to False for testing, True for production
     
     # Connection keep alive ping interval
     "HEARTBEAT_INTERVAL": 20,
     
     # Maximum message size
     "MAX_MESSAGE_SIZE": 1024 * 1024,  # 1MB
+    
+    # ✅ Add these settings
+    "GRAPHQL_WS_PATH": "graphql-ws/",
+    "CONNECTION_INIT_TIMEOUT": 60,
 }

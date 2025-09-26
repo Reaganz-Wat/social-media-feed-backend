@@ -165,13 +165,16 @@ class CreatePost(graphene.Mutation):
                 media_type=input.media_type
             )
             
-            # Trigger subscription
+            # ✅ Fixed subscription broadcasting
+            from .subscriptions import PostCreatedSubscription
+            
+            # Broadcast to general post created group
             PostCreatedSubscription.broadcast(
                 payload=post,
                 group="post_created"
             )
-        
-            # Also trigger user-specific subscription
+            
+            # Broadcast to user-specific group
             PostCreatedSubscription.broadcast(
                 payload=post,
                 group=f"post_created_by_{user.id}"
