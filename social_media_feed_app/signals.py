@@ -20,10 +20,10 @@ def user_created_handler(sender, instance, created, **kwargs):
         )
         
         # Send welcome email asynchronously via Celery
-        # sending_email_on_registration.delay(
-        #     user_email=instance.email,
-        #     user_name=instance.username
-        # )
+        sending_email_on_registration.delay(
+            user_email=instance.email,
+            user_name=instance.username
+        )
 
         # Additional optional actions:
         # - Create default user settings
