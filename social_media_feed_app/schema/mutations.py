@@ -6,6 +6,7 @@ from django.core.validators import validate_email
 from .types import *
 from .inputs import *
 from social_media_feed_app.models import *
+from .subscriptions import PostCreatedSubscription
 
 class RegisterUser(graphene.Mutation):
     success = graphene.Boolean()
@@ -162,6 +163,21 @@ class CreatePost(graphene.Mutation):
                 title=input.title,
                 content=input.content.strip(),
                 media_type=input.media_type
+            )
+            
+            # ✅ Fixed subscription broadcasting
+            from .subscriptions import PostCreatedSubscription
+            
+            # Broadcast to general post created group
+            PostCreatedSubscription.broadcast(
+                payload=post,
+                group="post_created"
+            )
+            
+            # Broadcast to user-specific group
+            PostCreatedSubscription.broadcast(
+                payload=post,
+                group=f"post_created_by_{user.id}"
             )
             
             return CreatePost(
@@ -473,7 +489,7 @@ class CreatePost(graphene.Mutation):
             except CustomUser.DoesNotExist:
                 return CreatePost(
                     success=False,
-                    message="User nof found",
+                    message="User not found",
                     post=None,
                     errors=["Invalid user ID"]
                 )
