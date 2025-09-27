@@ -60,7 +60,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+     # 'whitenoise.middleware.WhiteNoiseMiddleware',  # recommended for pythonanywhere, for whitenoise
 ]
+
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # Good for static files serving, can work well on pythonanywhere
+
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For static files
 
 ROOT_URLCONF = 'social_media_feed_backend.urls'
 
