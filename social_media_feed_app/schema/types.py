@@ -96,3 +96,16 @@ class UserStatsType(graphene.ObjectType):
     following_count = graphene.Int()
     engagement_rate = graphene.Float()
     top_performing_post = graphene.Field(PostType)
+    
+    
+class PostCreatedType(graphene.ObjectType):
+    post = graphene.Field(PostType)
+
+class PostLikedType(graphene.ObjectType):
+    post = graphene.Field(PostType)
+    user = graphene.Field(CustomUserType)
+    likes_count = graphene.Int()
+
+class CommentCreatedType(graphene.ObjectType):
+    comment = graphene.Field(CommentType)
+    post = graphene.Field(PostType)

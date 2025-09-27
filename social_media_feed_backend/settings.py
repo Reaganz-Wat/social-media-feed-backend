@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import environ
 import os
+import datetime
 
 env = environ.Env(
     # Set default values for environment variables
@@ -41,6 +42,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
+    'channels_graphql_ws',
+    
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,7 +65,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+     # 'whitenoise.middleware.WhiteNoiseMiddleware',  # recommended for pythonanywhere, for whitenoise
 ]
+
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # Good for static files serving, can work well on pythonanywhere
+
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For static files
 
 ROOT_URLCONF = 'social_media_feed_backend.urls'
 
@@ -81,6 +91,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'social_media_feed_backend.wsgi.application'
 
+ASGI_APPLICATION = 'social_media_feed_backend.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -149,7 +160,7 @@ GRAPHENE = {
     "SCHEMA": "social_media_feed_app.schema.schema.schema",
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
-    ],
+    ]
 }
 
 AUTHENTICATION_BACKENDS = [
@@ -184,3 +195,90 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Africa/Kampala"
+
+GRAPHQL_JWT = {
+    'JWT_VERIFY_EXPIRATION': True,
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(hours=24),
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('redis', 6379)],
+        },
+    },
+}
+
+
+CHANNELS_GRAPHQL_WS = {
+    # Authentication backend
+    "AUTHENTICATION_REQUIRED": False,  # ✅ Set to False for testing, True for production
+    
+    # Connection keep alive ping interval
+    "HEARTBEAT_INTERVAL": 20,
+    
+    # Maximum message size
+    "MAX_MESSAGE_SIZE": 1024 * 1024,  # 1MB
+    
+    # ✅ Add these settings
+    "GRAPHQL_WS_PATH": "graphql-ws/",
+    "CONNECTION_INIT_TIMEOUT": 60,
+}
+
+
+
+
+# Override database settings for testing
+import sys
+if 'test' in sys.argv or 'test_coverage' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',  # Use in-memory SQLite for fastest tests
+    }
+    
+    # Disable migrations for faster test runs
+    class DisableMigrations:
+        def __contains__(self, item):
+            return True
+        def __getitem__(self, item):
+            return None
+    
+    MIGRATION_MODULES = DisableMigrations()
+    
+    # Use faster password hashing for tests
+    PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
+
+# Optional: Test-specific settings
+if 'test' in sys.argv:
+    # Disable migrations for faster test runs
+    class DisableMigrations:
+        def __contains__(self, item):
+            return True
+        def __getitem__(self, item):
+            return None
+    
+    MIGRATION_MODULES = DisableMigrations()
+    
+    # Use faster password hashing for tests
+    PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
+    
+    # Disable logging during tests
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'CRITICAL',
+        },
+    }
