@@ -221,3 +221,59 @@ CHANNELS_GRAPHQL_WS = {
     "GRAPHQL_WS_PATH": "graphql-ws/",
     "CONNECTION_INIT_TIMEOUT": 60,
 }
+
+
+
+
+# Override database settings for testing
+import sys
+if 'test' in sys.argv or 'test_coverage' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',  # Use in-memory SQLite for fastest tests
+    }
+    
+    # Disable migrations for faster test runs
+    class DisableMigrations:
+        def __contains__(self, item):
+            return True
+        def __getitem__(self, item):
+            return None
+    
+    MIGRATION_MODULES = DisableMigrations()
+    
+    # Use faster password hashing for tests
+    PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
+
+# Optional: Test-specific settings
+if 'test' in sys.argv:
+    # Disable migrations for faster test runs
+    class DisableMigrations:
+        def __contains__(self, item):
+            return True
+        def __getitem__(self, item):
+            return None
+    
+    MIGRATION_MODULES = DisableMigrations()
+    
+    # Use faster password hashing for tests
+    PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
+    
+    # Disable logging during tests
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'CRITICAL',
+        },
+    }
