@@ -489,7 +489,7 @@ class CreatePost(graphene.Mutation):
             except CustomUser.DoesNotExist:
                 return CreatePost(
                     success=False,
-                    message="User nof found",
+                    message="User not found",
                     post=None,
                     errors=["Invalid user ID"]
                 )
