@@ -144,15 +144,6 @@ docker-compose up -d
 docker-compose logs -f web
 ```
 
-### Production
-```bash
-# Use production compose file
-docker-compose -f docker-compose.prod.yml up -d
-
-# Scale workers
-docker-compose -f docker-compose.prod.yml up --scale celery=3 -d
-```
-
 ## Repository Structure
 
 ```text
