@@ -44,9 +44,8 @@ This document explains the deployment architecture that has been implemented for
    * Free tier provides ~30 MB memory.
    * `REDIS_URL` environment variable is used in Django settings and Celery config.
 
-4. **Celery Worker (Render)**
+4. **Celery Worker**
 
-   * Background worker service created on Render.
    * Celery started with:
 
      ```bash
@@ -66,4 +65,3 @@ This multi-provider deployment allows the Django + GraphQL app with background t
 * PythonAnywhere for always-on web app.
 * Supabase for database.
 * Redis Cloud for task broker.
-* Render for background Celery workers.
