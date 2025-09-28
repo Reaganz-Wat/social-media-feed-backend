@@ -22,12 +22,6 @@ This document explains the deployment architecture that has been implemented for
   * Handles task queues for background processing.
   * Also used as a caching layer for Django.
 
-* **Render → Celery worker**
-
-  * Runs background worker processes for Celery tasks.
-  * Connects to the Redis broker and Postgres database.
-  * Runs independently of the Django web app.
-
 ## Deployment Notes
 
 1. **Django + GraphQL (PythonAnywhere)**
