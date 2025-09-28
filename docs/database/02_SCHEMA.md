@@ -6,6 +6,53 @@
 ## Tables
 The following schema supports users, posts, interactions, and messaging.
 
+### Table Summary
+
+| Table | Purpose | Key Features | Relationships |
+|-------|---------|--------------|---------------|
+| `users` | Core user management | Authentication, profiles, verification | One-to-many with posts, comments, likes |
+| `posts` | Content management | Text, media, soft deletes | Belongs to user, has many comments/likes |
+| `comments` | Threaded discussions | Nested replies, soft deletes | Belongs to post/user, self-referencing |
+| `post_likes` | Post engagement | Unique constraints, timestamps | Many-to-many posts/users |
+| `comment_likes` | Comment engagement | Unique constraints, timestamps | Many-to-many comments/users |
+| `shares` | Content amplification | Optional captions, unique shares | Many-to-many posts/users |
+| `follows` | Social graph | Directional relationships | Many-to-many users (asymmetric) |
+| `friendships` | Mutual connections | Status management, bidirectional | Many-to-many users (symmetric) |
+| `messages` | Private communication | Read status, chronological | Many-to-many users (directed) |
+| `interactions` | Analytics tracking | Flexible event system, metadata | Polymorphic relationships |
+
+### Entity Relationships
+
+| Relationship Type | Tables Involved | Cardinality | Description |
+|-------------------|-----------------|-------------|-------------|
+| **User → Content** | users → posts | 1:N | Users create multiple posts |
+| **User → Content** | users → comments | 1:N | Users write multiple comments |
+| **Post → Comments** | posts → comments | 1:N | Posts have multiple comments |
+| **Comment Threading** | comments → comments | 1:N | Self-referencing for replies |
+| **Engagement** | users ↔ posts | M:N | Likes and shares |
+| **Engagement** | users ↔ comments | M:N | Comment likes |
+| **Social Graph** | users ↔ users | M:N | Follows (asymmetric) |
+| **Social Graph** | users ↔ users | M:N | Friendships (symmetric) |
+| **Communication** | users ↔ users | M:N | Messages (directional) |
+| **Analytics** | users → * | 1:N | User interactions with any entity |
+
+### Data Types & Constraints
+
+| Field Type | Usage | Examples | Constraints |
+|------------|-------|----------|-------------|
+| **SERIAL** | Primary keys | `id` columns | Auto-increment, unique |
+| **VARCHAR(n)** | Text with limits | usernames, emails, titles | Length constraints |
+| **TEXT** | Unlimited text | post content, bios, messages | No length limit |
+| **BOOLEAN** | Flags | is_verified, is_deleted, is_read | Default values |
+| **TIMESTAMP** | Date/time | created_at, updated_at | Auto-generated |
+| **JSONB** | Flexible data | interaction metadata | PostgreSQL optimized |
+| **UNIQUE** | Prevent duplicates | email, username, like pairs | Database enforced |
+| **CHECK** | Business rules | status values, self-reference prevention | Custom validation |
+
+
+### Core Tables
+#### Users Table - Core User Management
+
 ```sql
 -- Users table - Core user management
 CREATE TABLE users (
