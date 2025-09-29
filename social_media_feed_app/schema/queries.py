@@ -4,6 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .types import *
 from social_media_feed_app.models import *
+from graphql import GraphQLError
 
 class Query(graphene.ObjectType):
     # Post queries
@@ -35,6 +36,9 @@ class Query(graphene.ObjectType):
     search_users = graphene.List(CustomUserType, query=graphene.String(required=True))
     
     def resolve_all_posts(self, info, limit=10, offset=0, user_id=None):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise GraphQLError("Authentication credentials were not provided.")
         queryset = Post.objects.filter(is_deleted=False).select_related('user').prefetch_related('likes', 'comments', 'shares')
         
         if user_id:
@@ -44,6 +48,10 @@ class Query(graphene.ObjectType):
         return queryset[offset:offset + limit]
     
     def resolve_post_by_id(self, info, id):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise GraphQLError("Authentication credentials were not provided.")
+        
         try:
             return Post.objects.select_related('user').prefetch_related(
                 'comments__user',
@@ -56,7 +64,7 @@ class Query(graphene.ObjectType):
     def resolve_user_feed(self, info, limit=10, offset=0):
         user = info.context.user
         if not user.is_authenticated:
-            return []
+            raise GraphQLError("Authentication credentials were not provided.")
         
         following_users = Follow.objects.filter(follower=user).values_list('followee_id', flat=True)
         user_ids = list(following_users) + [user.id]
@@ -70,6 +78,11 @@ class Query(graphene.ObjectType):
         return queryset[offset:offset + limit]
     
     def resolve_post_comments(self, info, post_id):
+        
+        user = info.context.user
+        if not user.is_authenticated:
+            raise GraphQLError("Authentication credentials were not provided.")
+        
         return Comment.objects.filter(
             post_id=post_id,
             parent_comment=None,
@@ -77,12 +90,22 @@ class Query(graphene.ObjectType):
         ).select_related('user').prefetch_related('replies', 'likes').order_by('created_at')
     
     def resolve_comment_replies(self, info, comment_id):
+        
+        user = info.context.user
+        if not user.is_authenticated:
+            raise GraphQLError("Authentication credentials were not provided.")
+        
         return Comment.objects.filter(
             parent_comment_id=comment_id,
             is_deleted=False
         ).select_related('user').prefetch_related('likes').order_by('created_at')
     
     def resolve_trending_posts(self, info, limit=10, hours=24):
+        
+        user = info.context.user
+        if not user.is_authenticated:
+            raise GraphQLError("Authentication credentials were not provided.")
+        
         time_threshold = timezone.now() - timedelta(hours=hours)
         
         queryset = Post.objects.filter(
@@ -98,6 +121,11 @@ class Query(graphene.ObjectType):
         return queryset.order_by('-engagement_score')[:limit]
     
     def resolve_user_by_id(self, info, id):
+        
+        user = info.context.user
+        if not user.is_authenticated:
+            raise GraphQLError("Authentication credentials were not provided.")
+        
         try:
             return CustomUser.objects.prefetch_related(
                 'posts', 'followers', 'following'
@@ -106,6 +134,11 @@ class Query(graphene.ObjectType):
             return None
         
     def resolve_user_stats(self, info, id):
+        
+        user = info.context.user
+        if not user.is_authenticated:
+            raise GraphQLError("Authentication credentials were not provided.")
+        
         try:
             user = CustomUser.objects.get(id=id)
         except CustomUser.DoesNotExist:
