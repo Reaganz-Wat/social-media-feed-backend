@@ -1,6 +1,6 @@
 import graphene
 import channels_graphql_ws
-from .types import PostCreatedType, PostLikedType, CommentCreatedType, PostType, CustomUserType, CommentType
+from .types import PostType, CustomUserType, CommentType
 
 class PostCreatedSubscription(channels_graphql_ws.Subscription):
     """Subscription for new posts."""
